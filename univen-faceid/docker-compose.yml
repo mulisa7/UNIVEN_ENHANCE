@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: faceid
+      POSTGRES_PASSWORD: faceid
+      POSTGRES_DB: faceid
+    ports:
+      # Host port 5433, not 5432: this machine already has a native Postgres
+      # service bound to 5432. Containers on the "backend" service still talk
+      # to this one internally as db:5432 — only the host-facing port differs.
+      - "5433:5432"
+    volumes:
+      - faceid_db_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://faceid:faceid@db:5432/faceid
+    ports:
+      - "8000:8000"
+
+volumes:
+  faceid_db_data:
